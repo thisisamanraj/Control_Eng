@@ -1,0 +1,123 @@
+CODE:-
+
+PAM MODULATION 
+
+%PULSE AMPLITUDE MODULATION PAM
+
+clc;
+close  all;
+clear  all;
+pkg load signal
+
+t=0:0.0001:2;
+f=5;
+x=sin(2*pi*f*t);
+Ts=0.02;
+
+%PULSE GENERATION
+
+for k=1:length(t)
+if mod(t(1,k),Ts)==0
+sa(1,k)=1; %PULSE
+else sa(1,k)=0;
+end
+end
+ypam=x.*sa;
+subplot(5,1,1);
+plot(t,x);
+title('message')
+subplot(5,1,2);
+plot(t,sa);
+title('switching signal');
+subplot(5,1,3);
+plot(t,ypam);
+title('NaturalPAM');
+
+%FLAT TOP PAM
+
+ypamft=zeros(1,length(t));
+k=1;
+while k <length(t)
+if ypam(1,k)~=0
+ypamft(1,k:k+49)=ypam(1,k)*ones(1,50); % pulse duration is 50*0.001
+k=k+49;
+else ypamft(1,k)=0;
+k=k+1;
+end
+end
+subplot(5,1,4);
+plot(t,ypamft);
+title('Flat top FAM')
+
+%Demodulation
+
+[b,a]=butter(7,0.005);
+demod=filter(b,a,ypamft);
+subplot(5,1,5);
+plot(t,demod);
+title('Demodulation of PAM');
+
+PWM MODULATION :
+
+
+clc;
+clear all;
+close all;
+pkg load signal
+
+t=0:0.001:1;
+s=1*sawtooth(2*pi*50*t);
+m=1*sin(2*pi*1*t);
+subplot(4,1,1);
+plot(t,s);
+title('sawtooth signal');
+subplot(4,1,2);
+plot(t,m);
+title('sine wave');
+n=length(s);
+for i=1:n
+if (m(i)>=s(i))
+pwm(i)=1;
+elseif (m(i)<=s(i))
+pwm(i)=0;
+end
+end
+subplot(4,1,3);
+plot(t,pwm);
+ylabel('Amplitude');
+xlabel('Time index');
+title('PWM Wave');
+axis([0 1 0 2]);
+%Demodulation
+[b,a]=butter(10,0.05);
+demod=filter(b,a,pwm);
+subplot(4,1,4);
+plot(t,demod);
+title('Demodulation of PWM');
+
+PPM MODULATION AND DEMODULATION, GENERATION THROUGH PWM WAVE
+
+clear all
+pkg load signal;
+fs=400;
+t=0:1/fs:1;
+x1=20*sawtooth(2*pi*20*t);
+figure;subplot(6,1,1);plot(t,x1);title('sawtooth sihnal');
+m=10*sin(2*pi*2*t);subplot(6,1,2);plot(t,m,t,x1,'r');title('message signal');
+pwm=(m>x1);
+subplot(6,1,3);plot(t,pwm,'r');title('PWM Signal');
+ipwm=~pwm;
+dipwm=diff(ipwm);n=0:1/fs:0.999;
+subplot(6,1,4),plot(n,dipwm);title('Signal after inverter and differentiator');
+l=length(dipwm);ppm=zeros(1,l);
+for i =1:(l-1)
+  if dipwm(1,i)>0
+    ppm(1,i)=1;
+  end
+end
+subplot(6,1,5);plot(n,ppm);title('PPM Signal')
+[b,a]=butter(5,0.02);
+s1=filter(b,a,pwm);
+subplot(6,1,6);
+plot(t,s1);
+title('Demodulated message signal');
